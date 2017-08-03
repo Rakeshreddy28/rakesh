@@ -1,0 +1,239 @@
+RHCSA
+#########################
+Instruction-1
+Reset root Password to redhat
+---> at the start prompt of linux press e
+---> go near to fi
+		linux 16 and press end key there it will reach at UTF-8 please  type there 
+		rd.break console=tty1
+---->ctlr+x
+---->#mount -o remount,rw /sysroot
+---->#chroot /sysroot
+---->#passwd root
+----->#New Password:
+----->Retype new passwd
+----->#touch /.autorelabel
+----->exit and exit (2 time exit is required)
+if progrss is showing with % 33.21%..
+its done
+##########################
+Instruction-2
+Setup network with static IP with below given information and set hostname to station.domainX.example.com
+Static IP          172.25.X.11
+Netmask            255.255.255.0
+Defaul gateway   172.25.X.254
+Primary DNS Server 192.X.254.254
+DNS search path  example.com
+########################
+
+Instruction-3
+configure yum client with baseurl as http://classroom.example.com/content/rhel7.0/x86_64/dvd
+#######################
+
+Questions 1    |   SELinux
+Make SELinux as enforcingmode which is permanent .
+#######################
+
+ANS#vim /etc/sysconfig/selinux
+SELINUX=Enforcing
+:wq!
+#sestatus
+#setenforce 1
+#################################
+Questions 2    |   CREATE LVM
+Create the "LVM" with the name "fedora" by using 15PE's from tha volume group "redhat". Consider the PE size as "16MB". Mount it on /test with filesystem vfat.  
+ANS#fdisk /dev/vdb
+    partprobe 
+    cat /proc/partitions 
+    pvcreate /dev/vdb1 
+    vgcreate -s 16 redhat /dev/vdb1
+    lvcreate -l 15 -n fedora redhat
+    mkdir /test
+    mkfs.vfat /dev/redhat/fedora 
+    mount /dev/redhat/fedora /test/
+    df -hT
+    vim /etc/fstab 
+    mount -a
+##############################
+Questions 3    |   USER'S GROUPS AND PERMISSION: 
+a.Create a group named "sysadmin"
+b.A user dax and max should belongs to "manager" group as a secondary group . A user natasha should have non-interactive shell and he should not be a member of "manager" group. passwd for all user created should be "redhat123". 
+ANS#groupadd sysadmin
+#groupadd manager
+#useradd -G manager dax 
+#useradd -G manager max
+#useradd -s /sbin/nologin natasha
+#echo "redhat123" | passwd --stdin dax
+#echo "redhat123" | passwd --stdin max
+#echo "redhat123" | passwd --stdin natasha
+#cat /etc/passwd ;cat /etc/group
+###########################
+Questions 4    |   DIRECTORY COLLABORATION:
+Create the Directory "/home/manager" with the following characteristics. Group ownership of "/home/manager" should go to "manager" group. The directory should be have full permission for all members of "manager" group but not to any other users except "root". Files created under "/home/manager" should get the same group ownership is set to the "manager" group. 
+
+ANS
+#mkdir -p /home/manager
+#chgrp manager /home/manager
+#chmod g+rwxs /home/manager
+#ls -ld /home/manager
+#######################
+Questions 5    |   UPDATE THE KERNEL:
+Install the appropriate Kernel from http://classroom.example.com/pub/. Your machine should boot with updated kernel. 
+ANS
+#open your firefox or use wget http://classroom.example.com/pub/kernel.....
+#cd Download
+#uname -r
+#rpm -ivh kernel<tab>
+#init 6
+#vim /etc/grub.conf
+#####################
+Question:6	|	CRON Job
+The user sarah must configure a cron job that runs daily at 14:23. and executes /bin/echo "welcome". Max user should not schedule cron jobs.
+
+
+ANS
+#useradd sarah
+#echo "redhat" | passwd --stdin sarah
+#su - sarah
+sarah$crontab -e
+23 14 * * * /bin/echo "welcome"
+:wq!
+#systemctl restart crond
+#systemctl enable crond
+#vim /etc/cron.deny
+max
+:wq!
+##################
+Questions 7    |   RESIZE LVM:
+Resize the lvm "/dev/vgsrv/home" so that after reboot size should be in between 90MB to 120MB. The filesystem will be "ext4"
+ANS.
+--check the lvm size by lvdisplay
+--check the PE size by vgdisplay 
+then,
+#lvextend -L 96 /dev/vgsrv/home
+#resize2fs /dev/vgsrv/home 96M
+#################
+Question8	|	LDAP
+Note the following. BASE DN: dc=example,dc=com ldap path ldap://classroom.example.com/ Download the certificate from "http://classroom.example.com/pub/EXAMPLE-CA-CERT" ldapuserX should login into your system . Where "X" is your system no.
+ANS
+# yum install authconfig-gtk.x86_64 sssd -y
+#system-config-authentication
+in the dialogue box
+ldap search base DN:type in the box --dc=example,dc=com
+	ldap server:type in the box --ldap://classroom.example.com/
+tick on the use TLS----then Download the certificate
+type in the box http://classroom.example.com/pub/EXAMPLE-CA-CERT
+apply-apply
+#getent passwd ldapuserX
+#su - ldapuserX
+if bash prompt is coming you have correctly configure ldap ,(dont fear about error because its need a auto mount which we have not configured yet)
+#########################
+
+Questions 9    |   "NTP" CLIENT:
+Configure your system as "NTP" client for "classroom.example.com". 
+
+ANS
+#systsemctl enable chronyd.service
+#systemctl restart chronyd.service
+#systemctl disable ntpd
+#systemctl stop ntpd
+#systemctl mask ntpd
+#vim /etc/chrony.conf
+#tzselect
+#timedatectl
+#systemctl restart chronyd.service
+#timedatectl
+#systemctl restart chronyd.service
+#timedatectl
+#########################
+QUestion 10 |	NFS Automount
+Note the following. classroom.example.com "Nfs exports" /home/guests to your system where "x" is your station ip. Ldapuser's home directory is classroom.example.com:/home/guests/ldapuserx. Ldapuser's home directory should be automounted locally beneath at /home/guests/ldapuserx. While login with any of the ldapuser then only home directory should accesible from your system that ldapuserX. 
+
+ANS
+#yum install autofs -y
+#vim /etc/auto.master
+at the end of the line
+/home/guests /etc/auto.misc
+:wq!
+#vim /etc/auto.misc
+ldapuserX  -rw                     classroom.example.com:/home/guests/ldapuserX
+:wq!
+# systemctl restart autofs
+# systemctl enable autofs
+#su -ldapuserX
+[ldapuser11@server11 ~]$ pwd
+/home/guests/ldapuser11
+#######################
+Question 11  | ACL 
+Copy the file /etc/fstab to /var/tmp/fstab and configure the "ACL" as mention following. The file /var/tmp/fstab is owned by the "root". The file /var/tmp/fstab belongs to the group "testmanager" The file /var/tmp/fstab should not be executable by other's. The user "max" should able to read and write to the file. The user "dax" can neither read nor write to the file. other users (future and current) shuold be able to read /var/tmp/fstab.
+ANS
+#cp -rvpf /etc/fstab /var/tmp/fstab
+#grupadd testmanager
+#chgrp testmanager /var/tmp/fstab
+#cd /var/tmp/fstab
+#getfacl fstab
+#setfacl -m u:dax:--- fstab
+#setfacl -m u:max:rw- fstab
+#####################
+
+Questions 12    |   CONFIGURE FTP SERVER:
+Configure FTP access from your system. Clients should have ananoumous access to your system. 
+
+ANS
+#yum install vsftd* -y
+#systemctl restart vsftpd
+#systemctl enable vsftpd
+##################
+
+Questions 13    |   ADD USERS:
+Create the user gabriel with uid 4223 with password "redhat".
+
+ANS
+#useradd -u 4223 gabriel
+#echo "redhat" | passwd --stdin gabriel
+######################################
+Questions 14    |   EXTEND SWAP SPACE:
+Extend the SWAP space to 250MiB. 
+
+ANS
+#fdisk /dev/vdb
+press n (p,l)
+enter-->enter-->type +250M  enter
+select t for giving type to swap id is=82
+w
+#partprobe
+#mkswap /dev/vd7
+after  completing swap partition it will give an UUID copy and paste in fstab or 
+in fstabe
+#vim /etc/fstab
+/dev/vdb7 swap	swap	defaults 0 0 
+:wq
+#swapon /dev/vdb7
+#mount -a ;echo $?
+#free -m
+####################################
+Questions 15    |   LOCATE THE FILES:
+locate the files of owner "gabriel" and copy those to /root/john. 
+
+ANS
+#mkdir -p /root/john
+#find / -user garbiel -exec cp -rvpf {} /root/john \;
+####################################
+Question16:	|	GREP
+List all lines which have string ip from "/usr/share/dict/words" file and copy the lines in /root/found
+
+ANS
+
+#grep "ip" /usr/share/dict/words >/root/found
+##################################################################################################
+Question17:	|	ARCHIVE
+Archive /etc/hosts to /var/tmp/archive.tar.bz2
+please read carefully the question /tmp is directory and /var is a directory.
+so remove the /tmp or /var and try it.
+
+ANS
+
+#tar cjf /var/tmp/archive.tar.bz2 /etc/hosts
+
+##################################<<<(((BEST OF LUCK)))>>>#########################################
+
